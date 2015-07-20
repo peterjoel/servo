@@ -64,11 +64,15 @@ impl DocumentLoader {
         }
     }
 
+    pub fn add_blocking_load(&mut self, load: LoadType) {
+        self.blocking_loads.push(load);
+    }
+
     /// Create a new pending network request, which can be initiated at some point in
     /// the future.
     pub fn prepare_async_load(&mut self, load: LoadType) -> PendingAsyncLoad {
         let url = load.url().clone();
-        self.blocking_loads.push(load);
+        self.add_blocking_load(load);
         PendingAsyncLoad::new((*self.resource_task).clone(), url, self.pipeline)
     }
 
@@ -77,7 +81,6 @@ impl DocumentLoader {
         let pending = self.prepare_async_load(load);
         pending.load_async(listener)
     }
-
 
     /// Mark an in-progress network request complete.
     pub fn finish_load(&mut self, load: LoadType) {

@@ -49,6 +49,7 @@ use net_traits::image_cache_task::ImageCacheTask;
 use net_traits::storage_task::StorageTask;
 use profile_traits::mem;
 use std::any::Any;
+use url::Url;
 use util::ipc::OptionalOpaqueIpcSender;
 use util::mem::HeapSizeOf;
 
@@ -141,7 +142,9 @@ pub enum ConstellationControlMsg {
         /// The pipeline that has been marked as loaded.
         target: PipelineId,
         /// The pipeline that contains a frame loading the target pipeline.
-        parent: PipelineId
+        parent: PipelineId,
+        /// Url of loaded frame.
+        url: Url,
     },
     /// Report an error from a CSS parser for the given pipeline
     ReportCSSError(PipelineId, String, usize, usize, String),
