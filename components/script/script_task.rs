@@ -20,7 +20,7 @@
 use devtools;
 use devtools_traits::{DevtoolScriptControlMsg, DevtoolsPageInfo};
 use devtools_traits::{ScriptToDevtoolsControlMsg, WorkerId};
-use document_loader::{DocumentLoader, LoadType};
+use document_loader::DocumentLoader;
 use dom::bindings::cell::DOMRefCell;
 use dom::bindings::codegen::Bindings::DocumentBinding::{DocumentMethods, DocumentReadyState};
 use dom::bindings::conversions::{FromJSValConvertible, StringificationBehavior};
@@ -1525,8 +1525,7 @@ impl ScriptTask {
         let page = get_page(&self.root_page(), containing_pipeline);
         let document = page.document();
         if let Some(iframe) = document.find_iframe_by_pipeline(id) {
-            iframe.iframe_load_event_steps();
-            document.finish_load(LoadType::Subframe(url));
+            iframe.iframe_load_event_steps(url);
         }
     }
 
