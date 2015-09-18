@@ -1324,6 +1324,9 @@ impl<'a, 'ln, ConcreteThreadSafeLayoutNode: ThreadSafeLayoutNode<'ln>>
             return false
         }
 
+        if node.in_fragmentation_container() {
+            return false
+        }
 
         let mut style = node.style().clone();
         let mut data = node.mutate_layout_data().unwrap();

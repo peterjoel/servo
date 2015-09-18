@@ -50,7 +50,7 @@ use script::dom::htmlimageelement::LayoutHTMLImageElementHelpers;
 use script::dom::htmlinputelement::{HTMLInputElement, LayoutHTMLInputElementHelpers};
 use script::dom::htmltextareaelement::{HTMLTextAreaElement, LayoutHTMLTextAreaElementHelpers};
 use script::dom::node::{HAS_CHANGED, HAS_DIRTY_DESCENDANTS, IS_DIRTY};
-use script::dom::node::{LayoutNodeHelpers, Node, OpaqueStyleAndLayoutData};
+use script::dom::node::{IN_FRAGMENTATION_CONTAINER, LayoutNodeHelpers, Node, OpaqueStyleAndLayoutData};
 use script::dom::text::Text;
 use script::layout_interface::TrustedNodeAddress;
 use selectors::matching::DeclarationBlock;
@@ -90,6 +90,10 @@ pub trait LayoutNode<'ln> : TNode<'ln> {
     unsafe fn borrow_layout_data_unchecked(&self) -> Option<*const PrivateLayoutData>;
     fn borrow_layout_data(&self) -> Option<Ref<PrivateLayoutData>>;
     fn mutate_layout_data(&self) -> Option<RefMut<PrivateLayoutData>>;
+    fn in_fragmentation_container(&self) -> bool;
+
+    unsafe fn set_in_fragmentation_container(&self, value: bool);
+
 }
 
 #[derive(Copy, Clone)]
@@ -223,6 +227,14 @@ impl<'ln> TNode<'ln> for ServoLayoutNode<'ln> {
 
     unsafe fn set_dirty_descendants(&self, value: bool) {
         self.node.set_flag(HAS_DIRTY_DESCENDANTS, value)
+    }
+
+    fn in_fragmentation_container(&self) -> bool {
+        unsafe { self.node.get_flag(IN_FRAGMENTATION_CONTAINER) }
+    }
+
+    unsafe fn set_in_fragmentation_container(&self, value: bool) {
+        self.node.set_flag(IN_FRAGMENTATION_CONTAINER, value)
     }
 
     unsafe fn borrow_data_unchecked(&self) -> Option<*const PrivateStyleData> {
@@ -747,6 +759,8 @@ pub trait ThreadSafeLayoutNode<'ln> : Clone + Copy + Sized {
         }
     }
 
+    fn in_fragmentation_container(&self) -> bool;
+
     /// If this is a text node, generated content, or a form element, copies out
     /// its content. Otherwise, panics.
     ///
@@ -913,6 +927,10 @@ impl<'ln> ThreadSafeLayoutNode<'ln> for ServoThreadSafeLayoutNode<'ln> {
         unsafe {
             (*self.node.borrow_layout_data_unchecked().unwrap()).flags
         }
+    }
+
+    fn in_fragmentation_container(&self) -> bool {
+        self.node.in_fragmentation_container()
     }
 
     fn text_content(&self) -> TextContent {
