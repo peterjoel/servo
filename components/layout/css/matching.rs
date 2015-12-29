@@ -431,10 +431,10 @@ impl<'ln, ConcreteNode> MatchMethods<'ln, ConcreteNode>
             // stuff.
             let layout_data: &mut PrivateLayoutData = transmute(data);
             layout_data.restyle_damage = damage;
-            self.set_in_fragmentation_container(
-                parent.as_ref().map_or(false, |p| p.in_fragmentation_container()) ||
-                layout_data.shared_data.style.as_ref().unwrap().is_multicol()
-            );
+            self.set_can_be_fragmented(parent.as_ref().map_or(false, |p| {
+                p.can_be_fragmented() ||
+                p.borrow_data().unwrap().style.as_ref().unwrap().is_multicol()
+            }));
         }
     }
 }

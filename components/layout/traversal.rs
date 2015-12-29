@@ -8,7 +8,7 @@ use construct::FlowConstructor;
 use context::LayoutContext;
 use css::matching::{ElementMatchMethods, MatchMethods, StyleSharingResult};
 use flow::{PostorderFlowTraversal, PreorderFlowTraversal};
-use flow::{self, Flow};
+use flow::{self, Flow, CAN_BE_FRAGMENTED};
 use gfx::display_list::OpaqueNode;
 use incremental::{self, BUBBLE_ISIZES, REFLOW, REFLOW_OUT_OF_FLOW, REPAINT, RestyleDamage};
 use script::layout_interface::ReflowGoal;
@@ -372,7 +372,10 @@ impl<'a> PostorderFlowTraversal for AssignBSizesAndStoreOverflow<'a> {
 
     #[inline]
     fn should_process(&self, flow: &mut Flow) -> bool {
-        flow::base(flow).restyle_damage.intersects(REFLOW_OUT_OF_FLOW | REFLOW)
+        let base = flow::base(flow);
+        base.restyle_damage.intersects(REFLOW_OUT_OF_FLOW | REFLOW)
+        // The fragmentation countainer is responsible for calling Flow::fragment recursively
+        && !base.flags.contains(CAN_BE_FRAGMENTED)
     }
 }
 
