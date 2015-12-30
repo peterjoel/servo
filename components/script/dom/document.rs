@@ -1226,6 +1226,11 @@ impl Document {
                            ReflowReason::RequestAnimationFrame);
     }
 
+    pub fn add_blocking_load(&self, load: LoadType) {
+        let mut loader = self.loader.borrow_mut();
+        loader.add_blocking_load(load)
+    }
+
     pub fn prepare_async_load(&self, load: LoadType) -> PendingAsyncLoad {
         let mut loader = self.loader.borrow_mut();
         loader.prepare_async_load(load)
@@ -2513,7 +2518,7 @@ impl DocumentProgressHandler {
         event.set_trusted(true);
         let _ = wintarget.dispatch_event_with_target(document.upcast(), &event);
 
-        document.notify_constellation_load();
+        document.r().notify_constellation_load();
 
         // https://developer.mozilla.org/en-US/docs/Web/Events/mozbrowserloadend
         document.trigger_mozbrowser_event(MozBrowserEvent::LoadEnd);

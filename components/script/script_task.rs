@@ -1018,8 +1018,8 @@ impl ScriptTask {
             ConstellationControlMsg::WebFontLoaded(pipeline_id) =>
                 self.handle_web_font_loaded(pipeline_id),
             ConstellationControlMsg::DispatchFrameLoadEvent {
-                target: pipeline_id, parent: containing_id } =>
-                self.handle_frame_load_event(containing_id, pipeline_id),
+                target: pipeline_id, parent: containing_id, url } =>
+                self.handle_frame_load_event(containing_id, pipeline_id, url),
             ConstellationControlMsg::ReportCSSError(pipeline_id, filename, line, column, msg) =>
                 self.handle_css_error_reporting(pipeline_id, filename, line, column, msg),
         }
@@ -1521,11 +1521,11 @@ impl ScriptTask {
     }
 
     /// Notify the containing document of a child frame that has completed loading.
-    fn handle_frame_load_event(&self, containing_pipeline: PipelineId, id: PipelineId) {
+    fn handle_frame_load_event(&self, containing_pipeline: PipelineId, id: PipelineId, url: Url) {
         let page = get_page(&self.root_page(), containing_pipeline);
         let document = page.document();
         if let Some(iframe) = document.find_iframe_by_pipeline(id) {
-            iframe.iframe_load_event_steps();
+            iframe.iframe_load_event_steps(url);
         }
     }
 

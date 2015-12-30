@@ -5,10 +5,13 @@
 //! Tracking of pending loads in a document.
 //! https://html.spec.whatwg.org/multipage/#the-end
 
+use dom::bindings::js::JS;
+use dom::document::Document;
 use msg::constellation_msg::PipelineId;
 use net_traits::AsyncResponseTarget;
 use net_traits::{PendingAsyncLoad, ResourceTask};
 use std::sync::Arc;
+use std::thread;
 use url::Url;
 
 #[derive(JSTraceable, PartialEq, Clone, Debug, HeapSizeOf)]
@@ -28,6 +31,47 @@ impl LoadType {
             LoadType::Subframe(ref url) |
             LoadType::Stylesheet(ref url) |
             LoadType::PageSource(ref url) => url,
+        }
+    }
+}
+
+/// Canary value ensuring that manually added blocking loads (ie. ones that weren't
+/// created via DocumentLoader::prepare_async_load) are always removed by the time
+/// that the owner is destroyed.
+#[derive(JSTraceable, HeapSizeOf)]
+#[must_root]
+pub struct LoadBlocker {
+    /// The document whose load event is blocked by this object existing.
+    doc: JS<Document>,
+    /// The load that is blocking the document's load event.
+    load: Option<LoadType>,
+}
+
+impl LoadBlocker {
+    /// Mark the document's load event as blocked on this new load.
+    pub fn new(doc: &Document, load: LoadType) -> LoadBlocker {
+        doc.add_blocking_load(load.clone());
+        LoadBlocker {
+            doc: JS::from_ref(doc),
+            load: Some(load),
+        }
+    }
+
+    /// Remove this load from the associated document's list of blocking loads.
+    pub fn terminate(&mut self) {
+        self.doc.finish_load(self.load.take().unwrap());
+    }
+
+    /// Return the url associated with this load.
+    pub fn url(&self) -> Option<&Url> {
+        self.load.as_ref().map(LoadType::url)
+    }
+}
+
+impl Drop for LoadBlocker {
+    fn drop(&mut self) {
+        if !thread::panicking() {
+            assert!(self.load.is_none());
         }
     }
 }
@@ -64,11 +108,15 @@ impl DocumentLoader {
         }
     }
 
+    pub fn add_blocking_load(&mut self, load: LoadType) {
+        self.blocking_loads.push(load);
+    }
+
     /// Create a new pending network request, which can be initiated at some point in
     /// the future.
     pub fn prepare_async_load(&mut self, load: LoadType) -> PendingAsyncLoad {
         let url = load.url().clone();
-        self.blocking_loads.push(load);
+        self.add_blocking_load(load);
         PendingAsyncLoad::new((*self.resource_task).clone(), url, self.pipeline)
     }
 
@@ -77,7 +125,6 @@ impl DocumentLoader {
         let pending = self.prepare_async_load(load);
         pending.load_async(listener)
     }
-
 
     /// Mark an in-progress network request complete.
     pub fn finish_load(&mut self, load: LoadType) {
