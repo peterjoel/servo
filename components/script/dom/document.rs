@@ -519,8 +519,12 @@ impl Document {
             self.GetDocumentElement()
         } else {
             use url::percent_encoding::percent_decode;
-            String::from_utf8(percent_decode(fragid.as_bytes())).ok()
-                .and_then(|decoded_fragid| self.get_element_by_id(&Atom::from(&*decoded_fragid)))
+            // note: whatwg doesn't specify to check for undecoded match, but if it's there, it is
+            // likely to be the intent of the content creator.
+            self.get_element_by_id(&Atom::from(&*fragid))
+                .or_else(|| String::from_utf8(percent_decode(fragid.as_bytes())).ok()
+                    .and_then(|decoded_fragid| self.get_element_by_id(&Atom::from(&*decoded_fragid)))
+                )
                 .or_else(|| self.get_anchor_by_name(fragid))
                 .or_else(|| if fragid.to_lowercase() == "top" {
                     self.GetDocumentElement()
