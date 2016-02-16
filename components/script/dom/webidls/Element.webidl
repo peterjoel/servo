@@ -72,7 +72,8 @@ interface Element : Node {
 partial interface Element {
   DOMRectList getClientRects();
   DOMRect getBoundingClientRect();
-
+  attribute unrestricted double scrollTop;
+  attribute unrestricted double scrollLeft;
   readonly attribute long clientTop;
   readonly attribute long clientLeft;
   readonly attribute long clientWidth;

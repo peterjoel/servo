@@ -1412,6 +1412,26 @@ impl ElementMethods for Element {
         self.upcast::<Node>().get_client_rect().size.height
     }
 
+    // https://drafts.csswg.org/cssom-view/#dom-element-scrolltop
+    fn ScrollTop(&self) -> f64 {
+        0.0
+    }
+
+    // https://drafts.csswg.org/cssom-view/#dom-element-scrolltop
+    fn SetScrollTop(&self, scrollTop: f64) {
+
+    }
+
+    // https://drafts.csswg.org/cssom-view/#dom-element-scrollleft
+    fn ScrollLeft(&self) -> f64 {
+        0.0
+    }
+
+    // https://drafts.csswg.org/cssom-view/#dom-element-scrollleft
+    fn SetScrollLeft(&self, scrollLeft: f64) {
+
+    }
+
     /// https://w3c.github.io/DOM-Parsing/#widl-Element-innerHTML
     fn GetInnerHTML(&self) -> Fallible<DOMString> {
         // XXX TODO: XML case
