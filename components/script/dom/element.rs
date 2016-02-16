@@ -811,6 +811,11 @@ impl Element {
         }
         None
     }
+
+    // https://drafts.csswg.org/cssom-view/#potentially-scrollable
+    fn potentially_scrollable(&self) -> bool {
+
+   }
 }
 
 
@@ -1414,7 +1419,27 @@ impl ElementMethods for Element {
 
     // https://drafts.csswg.org/cssom-view/#dom-element-scrolltop
     fn ScrollTop(&self) -> f64 {
-        0.0
+        // Step 1
+        let document = document_from_node(self);
+        // Step 2
+        let browsing_context = window_from_node(self).browsing_context();
+        let browsing_context = browsing_context.as_ref().unwrap();
+        let active_document = browsing_context.active_document();
+        if active_document.node.uniqueId != document.node.uniqueId {
+            return 0.0;
+        }
+        // Step 3
+        let window = document.DefaultView();
+        // skip Step 4: window cannot be null
+        // Step 5
+        if self.is_root() {
+            if document.quirks_mode == Quirks {
+                return 0.0;
+            } else {
+                // Step 6
+                return window.ScrollY();
+            }
+        }
     }
 
     // https://drafts.csswg.org/cssom-view/#dom-element-scrolltop
